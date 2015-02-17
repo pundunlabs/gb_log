@@ -1,0 +1,11 @@
+{
+    "app_name": "gb_log",
+    "params" : {
+        "rootdir" : "/Users/jonas/tmp/log",
+        "logname" : "local.pundun.log",
+	"maxsize" : 62914560, 
+	"number_of_files" : 20,
+	"remote_host" : "127.0.0.1",
+	"remote_port" : 32000 
+    }
+}

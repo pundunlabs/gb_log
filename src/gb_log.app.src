@@ -1,0 +1,7 @@
+{application, gb_log,
+ [{description, "Growbeard Logging"},
+  {vsn, "%VSN%"},
+  {modules, [%MODULES%]},
+  {registered, []},
+  {applications, [gb_conf]}
+ ]}.
