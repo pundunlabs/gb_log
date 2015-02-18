@@ -19,8 +19,10 @@ ERL_FILES = $(MODULES:%=%.erl)
 ERL_BEAMS = $(MODULES:%=$(EBIN)/%.beam)
 
 INCLUDE_DIRS = \
-	../include
+	../include \
+	../../gb_conf/include
 
+ERL_INCLUDE = $(INCLUDE_DIRS:%=-I %)
 .PHONY: all clean beams
 
 all: $(EBIN) $(APP_TARGET) beams
@@ -28,7 +30,7 @@ all: $(EBIN) $(APP_TARGET) beams
 beams: $(ERL_BEAMS)
 
 $(EBIN)/%.beam: %.erl
-	erlc -I $(INCLUDE_DIRS) -o $(EBIN) $< 
+	erlc $(ERL_INCLUDE) -o $(EBIN) $<
 
 $(EBIN):
 	mkdir $@

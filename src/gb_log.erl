@@ -6,6 +6,10 @@
 		fname, fsize, nfiles}).
 -include("gb_log.hrl").
 -include_lib("kernel/include/file.hrl").
+-include("gb_conf.hrl").
+
+%-define(gb_conf_get(Name), gb_conf:get_param(?gb_conf_default, Name)).
+%-define(gb_conf_get(Name, Default), gb_conf:get_param(?gb_conf_default, Name, Default)).
 
 tester(S) ->
     ?debug("tjenare: ~s", [S]).
@@ -81,22 +85,26 @@ do_step_files(Fname, 1) ->
 start_link() ->
     proc_lib:start_link(?MODULE, init, []).
 
+-define(gb_conf_default, "gb_log.json").
+
 init() ->
+    RootDir = ?gb_conf_get(rootdir),
+    LogName = ?gb_conf_get(logname, "pundun.log"),
+    FSize = ?gb_conf_get(maxsize, 62914560), % default 60MB
+    NFiles = ?gb_conf_get(number_of_files, 30),
+    RHost = ?gb_conf_get(remote_host, "127.0.0.1"),
+    RPort = ?gb_conf_get(remote_port, 32000),
+
     {ok, Sock} = gen_udp:open(0),
-    RootDir = "log", %gb_conf:get_param("gb_conf.json", "rootdir"),
-    LogName = "local.pundun.log", %gb_conf:get_param("gb_log.json", "logname"),
-    FSize = 60 * 1024 * 1024, % gb_conf:get_param("gb_log.json", "maxsize"),
-    NFiles = 20, %gb_conf:get_param("gb_log.json", "number_of_files"),
+
     Fname = filename:join(RootDir, LogName),
     {ok, FileFD} = open_log(Fname),
-    RHost = "127.0.0.1", % gb_conf:get_param("gb_log.json", "remote_host"),
-    RPort = 32000,       % gb_conf:get_param("gb_log.json", "remote_port"),
-    
+
     true = register(?MODULE, self()),
     proc_lib:init_ack({ok, self()}),
     State = #state{type=both, filefd=FileFD, fname=Fname,
 		   fsize = FSize, nfiles = NFiles,
-		   udpfd=Sock, remhost=RHost, remport=RPort, 
+		   udpfd=Sock, remhost=RHost, remport=RPort,
 		   node=atom_to_list(node())},
     log_loop(State, {0, []}).
 
