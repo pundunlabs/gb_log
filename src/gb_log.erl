@@ -88,7 +88,7 @@ start_link() ->
 -define(gb_conf_default, "gb_log.json").
 
 init() ->
-    RootDir = ?gb_conf_get(rootdir),
+    RootDir = ?gb_conf_get(logdir),
     LogName = ?gb_conf_get(logname, "pundun.log"),
     FSize = ?gb_conf_get(maxsize, 62914560), % default 60MB
     NFiles = ?gb_conf_get(number_of_files, 30),
