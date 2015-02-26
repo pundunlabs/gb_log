@@ -3,5 +3,6 @@
   {vsn, "%VSN%"},
   {modules, [%MODULES%]},
   {registered, []},
-  {applications, [gb_conf]}
+  {applications, [gb_conf]},
+  {mod, {gb_log_app,[]}}
  ]}.
