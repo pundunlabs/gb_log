@@ -8,9 +8,6 @@
 -include_lib("kernel/include/file.hrl").
 -include("gb_conf.hrl").
 
-%-define(gb_conf_get(Name), gb_conf:get_param(?gb_conf_default, Name)).
-%-define(gb_conf_get(Name, Default), gb_conf:get_param(?gb_conf_default, Name, Default)).
-
 tester(S) ->
     ?debug("tjenare: ~s", [S]).
 
@@ -88,14 +85,15 @@ start_link() ->
 -define(gb_conf_default, "gb_log.json").
 
 init() ->
-    RootDir = ?gb_conf_get(logdir),
+    RootDir = gb_conf_env:logdir(),
     LogName = ?gb_conf_get(logname, "pundun.log"),
     FSize = ?gb_conf_get(maxsize, 62914560), % default 60MB
     NFiles = ?gb_conf_get(number_of_files, 30),
     RHost = ?gb_conf_get(remote_host, "127.0.0.1"),
     RPort = ?gb_conf_get(remote_port, 32000),
 
-    {ok, Sock} = gen_udp:open(0),
+    {ok, Sock} = gen_udp:open(0, [{buffer, 1024*1024},
+				  binary]),
 
     Fname = filename:join(RootDir, LogName),
     {ok, FileFD} = open_log(Fname),
