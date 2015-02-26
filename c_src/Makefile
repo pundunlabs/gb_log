@@ -16,9 +16,9 @@ TARGETS = $(PRIV_BIN) \
 
 all: $(TARGETS)
 
-# Depencies
-demonize.c: damonize.h
-logwrap.c: logwrap.h
+# Dependencies
+$(PRIV_OBJS)/daemonize.o: daemonize.h
+$(PRIV_OBJS)/logwrap.o: logwrap.h
 
 show:
 	@echo $(TARGETS)
