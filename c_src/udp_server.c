@@ -1,18 +1,36 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <stdio.h>
-#include <strings.h>
 #include <stdlib.h>
 #include <libgen.h>
-
+#include <string.h>
 #include "logwrap.h"
 #include "daemonize.h"
 
 void usage(char **argv) {
-    printf("Usage: %s <logdir> <logname>\n", basename(argv[0]));
+    printf("Usage: %s -d <logdir> -l <logname>\n", basename(argv[0]));
+    printf("       %s -p <port> -d <logdir> -l <logname>\n", basename(argv[0]));
 }
 
-int main(int argc, char**argv)
+char* getarg(char param, int argc, char **argv) {
+    int i;
+    for (i=1; i<argc; i++) {
+	if (argv[i][0] == '-' && argv[i][1] == param) {
+	    if(argv[i+1])
+		return argv[i+1];
+	}
+    }
+    usage(argv);
+    exit(EXIT_FAILURE);
+}
+
+int getport(int argc, char **argv) {
+    char *portarg;
+    portarg = getarg('p', argc, argv);
+    return atoi(portarg);
+}
+
+int main(int argc, char **argv)
 {
     int sockfd,n;
     struct sockaddr_in servaddr,cliaddr;
@@ -20,16 +38,19 @@ int main(int argc, char**argv)
     char *dirname;
     char *filename;
     char mesg[3000];
+    int buffsize = 1024 * 1024;
+    int port;
 
-    if (argc < 3) {
-	usage(argv);
-	exit(EXIT_FAILURE);
-    }
-    
-    dirname = argv[1];
-    filename = argv[2];
+    dirname = getarg('d', argc, argv);
+    filename = getarg('l', argc, argv);
 
-    daemonize();
+    if (argc > 5 )
+	port = getport(argc, argv);
+    else
+	port = 32000;
+
+    printf("port %d dir %s logname %s\n", port, dirname, filename);
+
     /* find and open the right log */
     start_log(dirname, filename);
 
@@ -38,8 +59,14 @@ int main(int argc, char**argv)
     bzero(&servaddr,sizeof(servaddr));
     servaddr.sin_family = AF_INET;
     servaddr.sin_addr.s_addr=htonl(INADDR_ANY);
-    servaddr.sin_port=htons(32000);
+    servaddr.sin_port=htons(port);
     bind(sockfd,(struct sockaddr *)&servaddr,sizeof(servaddr));
+
+    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &buffsize, sizeof(buffsize)) == -1) {
+	printf("Could not set big receive buffer\n");
+    }
+
+    daemonize();
 
     for (;;)
     {
