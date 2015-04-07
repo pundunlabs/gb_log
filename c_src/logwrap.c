@@ -71,7 +71,7 @@ void log_print(char *format, ...) {
     now = tv.tv_sec;
     tmptr = localtime(&now);
     res = strftime(logbuf, LOGBUF_SIZE, "%F %T.", tmptr);
-    res += snprintf(logbuf + res, LOGBUF_SIZE, "%3d (%d) ", tv.tv_usec, getpid()); 
+    res += snprintf(logbuf + res, LOGBUF_SIZE, "%3ld (%d) ", (long int) tv.tv_usec, getpid());
     va_start(ap, format);
     res += vsprintf(logbuf + res, format, ap);
     va_end(ap);
