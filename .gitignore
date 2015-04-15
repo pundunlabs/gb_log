@@ -30,6 +30,11 @@ erl_crash.dump
 
 #ignore generated libraries
 *.so*
+*.o*
 
 # ignore .plts (Dialyzer PLT directory)
 .plts
+
+# ignore .rebar folder
+.rebar
+
