@@ -82,7 +82,7 @@ do_step_files(Fname, 1) ->
 start_link() ->
     proc_lib:start_link(?MODULE, init, []).
 
--define(gb_conf_default, "gb_log.json").
+-define(gb_conf_default, "gb_log.yaml").
 
 init() ->
     RootDir = gb_conf_env:logdir(),
