@@ -13,10 +13,14 @@ APP_TARGET= $(EBIN)/$(APP_FILE)
 MODULES = \
 	gb_log \
 	gb_log_sup \
-	gb_log_app
+	gb_log_app \
+	gb_log_cfg \
+	gb_log_oam \
 
 ERL_FILES = $(MODULES:%=%.erl)
 ERL_BEAMS = $(MODULES:%=$(EBIN)/%.beam)
+
+HRL_FILES = ../include/gb_log.hrl
 
 INCLUDE_DIRS = \
 	../include \
@@ -29,13 +33,16 @@ all: $(EBIN) $(APP_TARGET) beams
 
 beams: $(ERL_BEAMS)
 
-$(EBIN)/%.beam: %.erl
+gb_log_cfg.erl: gb_log_cfg.yrl
+	erlc $<
+
+$(EBIN)/%.beam: %.erl $(HRL_FILES)
 	erlc $(ERL_INCLUDE) -o $(EBIN) $<
 
 $(EBIN):
 	mkdir $@
 
-$(APP_TARGET): $(APP_SRC) 
+$(APP_TARGET): $(APP_SRC)
 	@set -e; mods=`echo $(MODULES) | sed -e 's; ;,;g'` ; \
 	sed -e "s;%MODULES%;$$mods;" $< | \
 	sed -e 's;%VSN%;$(VSN);' > $@

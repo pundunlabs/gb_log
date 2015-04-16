@@ -92,6 +92,8 @@ init() ->
     RHost = ?gb_conf_get(remote_host, "127.0.0.1"),
     RPort = ?gb_conf_get(remote_port, 32000),
 
+    gb_log_oam:load_default_filter(),
+
     {ok, Sock} = gen_udp:open(0, [{buffer, 1024*1024},
 				  binary]),
 
