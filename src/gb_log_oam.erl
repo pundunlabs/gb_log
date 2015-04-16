@@ -16,6 +16,12 @@ read(File) ->
     [make_filter(Filter) || Filter <- Filters].    
 
 
+available_filters() ->
+    [F || {F,_} <- erlang:get_module_info(gb_log_filters, exports), F =/= module_info].
+
+load_filter(Name) ->
+    code:load_binary(gb_log_filter, [], gb_log_filters:Name()).
+
 load_store_filters_beam() ->
     Filters = read(),
     Beam = make_filters_mod(Filters),
