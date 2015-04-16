@@ -22,20 +22,17 @@ load_store_filters_beam() ->
     File = filename:join(code:priv_dir(gb_log), "gb_log_filters.beam"),
     file:write_file(File, Beam).
 
-add_path() ->
-    case lists:member(code:priv_dir(gb_log), code:get_path()) of
-	false ->
-	    code:add_pathz(code:priv_dir(gb_log));
-	true ->
-	    ok
-    end.
+load_priv_beam() ->
+    FileName = filename:join(code:priv_dir(gb_log),"gb_log_filters.beam"),
+    {ok, Beam} = file:read_file(FileName),
+    code:load_binary(gb_log_filters, "", Beam).
 
 load_default_filter() ->
-    catch add_path(),
+    catch load_priv_beam(),
     case catch code:load_binary(gb_log_filter, [], gb_log_filters:default()) of
 	{module, gb_log_filter} ->
 	    ok;
-	_ ->
+	_E ->
 	    error_logger:error_info("gb_log: no default filter found, missing configuration; falling back to debug"),
 	    make_filters_mod([make_filter([{name, auto_fallback}, {level, debug}])]),
 	    code:load_binary(gb_log_filter, [], gb_log_filters:auto_fallback()),
