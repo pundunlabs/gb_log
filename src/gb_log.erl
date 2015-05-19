@@ -1,5 +1,10 @@
+%%%-------------------------------------------------------------------
+%%% @author Jonas Falkevik
+%%% @copyright (C) 2015, Jonas
+%%%-------------------------------------------------------------------
 -module(gb_log).
 -compile(export_all).
+
 -export([init/0]).
 	 
 -record(state, {type, filefd, udpfd, remhost, remport, node,
@@ -26,11 +31,14 @@ format_date(Inv) ->
 fmt_log(LF = #lf{ts=undefined}) ->
     Now = {_, _, MicroSecs} = os:timestamp(),
     {Date, Time} = calendar:now_to_local_time(Now),
-    String = io_lib:format(LF#lf.fmt, LF#lf.args),
+    String = io_lib:format(ff(LF#lf.fmt), LF#lf.args),
     Ts = [format_date(Date), " ", 
 	  format_time(Time), ".", 
 	  io_lib:format("~3.3.0w", [MicroSecs div 1000])],
     _LogData = io_lib:format("~s [~p:~p] ~s\n", [Ts, LF#lf.mod, LF#lf.line, String]).
+
+ff(FmtStr) ->
+    re:replace(FmtStr, "~p", "~100000p", [{return,list}, global]).
 
 do_log(Log) when is_binary(Log) ->
     ?MODULE ! {log, Log},
@@ -66,7 +74,9 @@ check_wrap(S = #state{filefd = FD}) ->
 
 step_files(#state{fsize=MaxSize, filefd=FD}, Size) when Size < MaxSize ->
     {ok, FD};
-step_files(#state{fname=Fname, nfiles=Nfiles}, _Size) ->
+step_files(S = #state{fname=Fname, nfiles=Nfiles}, _Size) ->
+    prim_file:write(S#state.filefd, "wrapping log...\n"),
+    prim_file:close(S#state.filefd),
     file:delete(Fname ++ "." ++ integer_to_list(Nfiles)),
     do_step_files(Fname, Nfiles).
 
@@ -82,19 +92,20 @@ do_step_files(Fname, 1) ->
 start_link() ->
     proc_lib:start_link(?MODULE, init, []).
 
+%% set default config
 -define(gb_conf_default, "gb_log.yaml").
-
 init() ->
     RootDir = gb_conf_env:logdir(),
     LogName = ?gb_conf_get(logname, "pundun.log"),
-    FSize = ?gb_conf_get(maxsize, 62914560), % default 60MB
-    NFiles = ?gb_conf_get(number_of_files, 30),
-    RHost = ?gb_conf_get(remote_host, "127.0.0.1"),
-    RPort = ?gb_conf_get(remote_port, 32000),
+    FSize  = ?gb_conf_get(maxsize, 60) % default 60MB
+			     * math:pow(2,20), %% convert to bytes
+    NFiles  = ?gb_conf_get(number_of_files, 30),
+    RHost   = ?gb_conf_get(remote_host, "127.0.0.1"),
+    RPort   = ?gb_conf_get(remote_port, 32000),
 
     gb_log_oam:load_default_filter(),
 
-    {ok, Sock} = gen_udp:open(0, [{buffer, 1024*1024},
+    {ok, Sock} = gen_udp:open(0, [{buffer, trunc(10 * math:pow(2,20))},
 				  binary]),
 
     Fname = filename:join(RootDir, LogName),
@@ -102,10 +113,16 @@ init() ->
 
     true = register(?MODULE, self()),
     proc_lib:init_ack({ok, self()}),
-    State = #state{type=both, filefd=FileFD, fname=Fname,
+    State = #state{type=ascii, filefd=FileFD, fname=Fname,
 		   fsize = FSize, nfiles = NFiles,
 		   udpfd=Sock, remhost=RHost, remport=RPort,
 		   node=atom_to_list(node())},
+
+    %% register our error logger event handler
+    gb_log_el:add(),
+    %% remove default error_logger
+    (catch gen_event:delete_handler(error_logger, error_logger, delete)),
+
     log_loop(State, {0, []}).
 
 log_loop(S, {Thold, Buffer}) when Thold < 10000 ->
@@ -124,6 +141,8 @@ log_loop(S, {_,Buffer}) ->
     NewS = log_data(lists:reverse(Buffer), S),
     log_loop(NewS, {0, []}).
 	    
+log_data(Data, S = #state{type=ascii}) ->
+    _NewS = ascii_log(S, Data);
 log_data(Data, S = #state{type=both}) ->
     gen_udp:send(S#state.udpfd, S#state.remhost, S#state.remport, Data),
     _NewS = ascii_log(S, Data).
