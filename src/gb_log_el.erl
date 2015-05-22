@@ -94,6 +94,12 @@ log_info_report(Type, Report) ->
     ?debug("info: ~p ~p", [Type, Report]),
     ok.
 
+log_error_report(crash_report, Report) ->
+    ?warning("CRASH: ~p", [Report]),
+    ok;
+log_error_report(supervisor_report, Report) ->
+    ?warning("SUPERVISOR: ~p", [Report]),
+    ok;
 log_error_report(Type, Report) ->
     ?warning("ERROR: ~p ~p", [Type, Report]),
     ok.
