@@ -16,6 +16,7 @@ MODULES = \
 	gb_log_app \
 	gb_log_cfg \
 	gb_log_oam \
+	gb_log_el \
 
 ERL_FILES = $(MODULES:%=%.erl)
 ERL_BEAMS = $(MODULES:%=$(EBIN)/%.beam)
