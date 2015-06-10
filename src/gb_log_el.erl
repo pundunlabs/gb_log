@@ -1,6 +1,6 @@
 %%%-------------------------------------------------------------------
 %%% @author Jonas Falkevik
-%%% @copyright (C) 2015, Jonas
+%%% @copyright (C) 2015, Jonas, Pundun Labs
 %%%-------------------------------------------------------------------
 -module(gb_log_el).
 
@@ -8,7 +8,8 @@
 -behaviour(gen_event).
 
 %% API
--export([add/0]).
+-export([add/0,
+	 remove/0]).
 
 -export([init/1,
 	 handle_event/2,
@@ -22,6 +23,9 @@
 %% API
 add() ->
     gen_event:add_handler(error_logger, ?MODULE, []).
+
+remove() ->
+    (catch gen_event:delete_handler(error_logger, ?MODULE, delete)).
 
 %% gen_event api
 init([]) ->
@@ -62,7 +66,6 @@ handle_event({Event, _G, {_E, Type, Report}}, State) ->
     log_unknown_report(Event, Type, Report),
     {ok, State}.
 
-
 handle_call(_Call, State) ->
     ?debug("unhandled call",[]),
     {ok, {error, not_handled}, State}.
@@ -78,8 +81,16 @@ code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
 %% Internal
+%%
+
+%% log_info_report
 log_info_report(info_report, [{application, App}, What]) ->
     ?debug("application ~p ~p", [App, What]),
+    ok;
+log_info_report(info_report, [{supervisor, {local, Sup}}, {started, Args}]) ->
+    Pid	 = proplists:get_value(pid, Args),
+    Name = proplists:get_value(name, Args),
+    ?debug("supervisor ~p started ~p(~p)", [Sup, Name, Pid]),
     ok;
 log_info_report(info_report, Report) ->
     ?debug("info: ~p", [Report]),
@@ -94,6 +105,7 @@ log_info_report(Type, Report) ->
     ?debug("info: ~p ~p", [Type, Report]),
     ok.
 
+%% log_error_report
 log_error_report(crash_report, Report) ->
     ?warning("CRASH: ~p", [Report]),
     ok;
@@ -104,14 +116,19 @@ log_error_report(Type, Report) ->
     ?warning("ERROR: ~p ~p", [Type, Report]),
     ok.
 
+%% log_info
 log_info(R0, []) ->
     R = re:replace(R0, "\n", "", [{return, list}, global]),
     ?debug("info: ~s", [R]),
+    ok;
+log_info(Fmt, Args) when is_list(Fmt), is_list(Args) ->
+    ?debug("info: ~s", [io_lib:format(Fmt, Args)]),
     ok;
 log_info(Type, Report) ->
     ?debug("info: ~p ~p", [Type, Report]),
     ok.
 
+%% log_error
 log_error(_, [R0]) ->
     R = re:replace(R0, "\n", " ", [{return, list}, global]),
     ?debug("ERROR: ~s", [R]),
@@ -120,6 +137,7 @@ log_error(T, R) ->
     ?debug("ERROR: ~p ~p", [T, R]),
     ok.
 
+%% log_unknown_report
 log_unknown_report(Event, Type, Report) ->
     ?debug("event: ~p ~p ~p", [Event, Type, Report]),
     ok.
