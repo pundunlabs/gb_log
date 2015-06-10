@@ -39,7 +39,7 @@ start_link() ->
 init([]) ->
     AChild = {'gb_log', {'gb_log', start_link, []},
 	      _Restart = permanent, 
-	      _Shutdown = 2000, 
+	      _Shutdown = 20000,
 	      _Type = worker, ['gb_log']},
 
     {ok, {_SupFlags = 
