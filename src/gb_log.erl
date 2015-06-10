@@ -40,14 +40,13 @@ fmt_log(LF = #lf{ts=undefined}) ->
 ff(FmtStr) ->
     re:replace(FmtStr, "~p", "~100000p", [{return,list}, global]).
 
-do_log(Log) when is_binary(Log) ->
-    ?MODULE ! {log, Log},
-    ok;
-
-do_log(Log0) when is_list(Log0) ->
-    Log = list_to_binary(Log0),
-    ?MODULE ! {log, Log},
-    ok.
+do_log(Log) when is_list(Log) ->
+    case whereis(?MODULE) of
+	undefined ->
+	    io:format(Log);
+	Pid ->
+	    Pid ! {log, Log}
+    end.
 
 %% TODO: this should be moved out to log filter
 %% for now; log everything independent of log level
@@ -105,6 +104,9 @@ init() ->
 
     gb_log_oam:load_default_filter(),
 
+    %% receive shutdown messages
+    erlang:process_flag(trap_exit, true),
+
     {ok, Sock} = gen_udp:open(0, [{buffer, trunc(10 * math:pow(2,20))},
 				  binary]),
 
@@ -123,6 +125,7 @@ init() ->
     %% remove default error_logger
     (catch gen_event:delete_handler(error_logger, error_logger, delete)),
 
+    prim_file:write(State#state.filefd, internal_fmt("Logging started.", [])),
     log_loop(State, {0, []}).
 
 log_loop(S, {Thold, Buffer}) when Thold < 10000 ->
@@ -130,8 +133,12 @@ log_loop(S, {Thold, Buffer}) when Thold < 10000 ->
 	{log, Data} ->
 	    log_loop(S, {Thold + 1, [Data|Buffer]})
     after 10  ->
-	    receive {log, Data} ->
-		log_loop(S, {Thold + 3000, [Data|Buffer]})
+	    receive
+		{log, Data} ->
+		    log_loop(S, {Thold + 3000, [Data|Buffer]});
+		{'EXIT', _FromPid, shutdown} ->
+		    log_data(lists:reverse(Buffer), S),
+		    terminate(S)
 	    after 3000 ->
 		NewS = log_data(lists:reverse(Buffer), S),
 		?MODULE:log_loop(NewS, {0, []})
@@ -147,3 +154,15 @@ log_data(Data, S = #state{type=both}) ->
     gen_udp:send(S#state.udpfd, S#state.remhost, S#state.remport, Data),
     _NewS = ascii_log(S, Data).
 
+terminate(State) ->
+    prim_file:write(State#state.filefd, internal_fmt("Shutting down..", [])),
+    gb_log_el:remove(),
+    prim_file:close(State#state.filefd),
+    exit(shutdown).
+
+internal_fmt(Fmt, Args) ->
+    Log = #lf{mod=?MODULE,
+	      line=?LINE,
+	      fmt=Fmt,
+	      args=Args},
+    _LogData = fmt_log(Log).
