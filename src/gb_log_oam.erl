@@ -1,5 +1,24 @@
-%% Copyright Mobile Arts - April 2015
-%% Author: Jonas Falkevik
+%%%===================================================================
+%% @author Jonas Falkevik
+%% @copyright 2015 Pundun Labs AB
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%% http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+%% implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+%% -------------------------------------------------------------------
+%% @title
+%% @doc
+%% Module Description:
+%% @end
+%%%===================================================================
 
 -module(gb_log_oam).
 -include("gb_log.hrl").
@@ -197,14 +216,18 @@ mod_info(Name) ->
 	[Info0, Info1].
 
 levelname_to_int(debug) ->
-    1;
-levelname_to_int(verbose) ->
-    2;
-levelname_to_int(trace) ->
-    3;
-levelname_to_int(normal) ->
-    4;
+    ?debug_level;
+levelname_to_int(info) ->
+    ?info_level;
+levelname_to_int(notice) ->
+    ?notice_level;
 levelname_to_int(warning) ->
-    5;
-levelname_to_int(fatal) ->
-    6.
+    ?warning_level;
+levelname_to_int(error) ->
+    ?error_level;
+levelname_to_int(critical) ->
+    ?critical_level;
+levelname_to_int(alert) ->
+    ?alert_level;
+levelname_to_int(emergency) ->
+    ?emergency_level.

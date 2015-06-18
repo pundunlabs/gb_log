@@ -1,7 +1,20 @@
-%%%-------------------------------------------------------------------
-%%% @author Jonas Falkevik
-%%% @copyright (C) 2015, Jonas
-%%%-------------------------------------------------------------------
+%%%===================================================================
+%% @author Jonas Falkevik
+%% @copyright 2015 Pundun Labs AB
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%% http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+%% implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+%%%===================================================================
+
 -module(gb_log).
 -compile(export_all).
 
@@ -28,6 +41,26 @@ format_date({Y,M,D}) ->
 format_date(Inv) ->
     {error, {invalid_format, Inv}}.
 
+%% integers needs to be alinged with gb_log.hrl
+fmt_level(0) ->
+    "dbg";
+fmt_level(1) ->
+    "inf";
+fmt_level(2) ->
+    "ntc";
+fmt_level(3) ->
+    "wrn";
+fmt_level(4) ->
+    "err";
+fmt_level(5) ->
+    "crt";
+fmt_level(6) ->
+    "alr";
+fmt_level(7) ->
+    "eme";
+fmt_level(_) ->
+    "inf".
+
 fmt_log(LF = #lf{ts=undefined}) ->
     Now = {_, _, MicroSecs} = os:timestamp(),
     {Date, Time} = calendar:now_to_local_time(Now),
@@ -35,7 +68,9 @@ fmt_log(LF = #lf{ts=undefined}) ->
     Ts = [format_date(Date), " ", 
 	  format_time(Time), ".", 
 	  io_lib:format("~3.3.0w", [MicroSecs div 1000])],
-    _LogData = io_lib:format("~s [~p:~p] ~s\n", [Ts, LF#lf.mod, LF#lf.line, String]).
+    Level = fmt_level(LF#lf.level),
+    _LogData = io_lib:format("~s ~s [~p:~p] ~s\n", [Ts, Level,
+						    LF#lf.mod, LF#lf.line, String]).
 
 ff(FmtStr) ->
     re:replace(FmtStr, "~p", "~100000p", [{return,list}, global]).

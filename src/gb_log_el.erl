@@ -1,7 +1,20 @@
-%%%-------------------------------------------------------------------
-%%% @author Jonas Falkevik
-%%% @copyright (C) 2015, Jonas, Pundun Labs
-%%%-------------------------------------------------------------------
+%%%===================================================================
+%% @author Jonas Falkevik
+%% @copyright 2015 Pundun Labs AB
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%% http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+%% implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+%%%===================================================================
+
 -module(gb_log_el).
 
 -include("gb_log.hrl").
@@ -85,7 +98,7 @@ code_change(_OldVsn, State, _Extra) ->
 
 %% log_info_report
 log_info_report(info_report, [{application, App}, What]) ->
-    ?debug("application ~p ~p", [App, What]),
+    ?info("application ~p ~p", [App, What]),
     ok;
 log_info_report(info_report, [{supervisor, {local, Sup}}, {started, Args}]) ->
     Pid	 = proplists:get_value(pid, Args),
@@ -107,7 +120,7 @@ log_info_report(Type, Report) ->
 
 %% log_error_report
 log_error_report(crash_report, Report) ->
-    ?warning("CRASH: ~p", [Report]),
+    ?error("CRASH: ~p", [Report]),
     ok;
 log_error_report(supervisor_report, Report) ->
     ?warning("SUPERVISOR: ~p", [Report]),
@@ -131,10 +144,10 @@ log_info(Type, Report) ->
 %% log_error
 log_error(_, [R0]) ->
     R = re:replace(R0, "\n", " ", [{return, list}, global]),
-    ?debug("ERROR: ~s", [R]),
+    ?error("~s", [R]),
     ok;
 log_error(T, R) ->
-    ?debug("ERROR: ~p ~p", [T, R]),
+    ?error("~p ~p", [T, R]),
     ok.
 
 %% log_unknown_report
