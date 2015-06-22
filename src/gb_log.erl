@@ -78,9 +78,11 @@ ff(FmtStr) ->
 do_log(Log) when is_list(Log) ->
     case whereis(?MODULE) of
 	undefined ->
-	    io:format(Log);
+	    io:format(Log),
+	    ok;
 	Pid ->
-	    Pid ! {log, Log}
+	    Pid ! {log, Log},
+	    ok
     end.
 
 %% TODO: this should be moved out to log filter

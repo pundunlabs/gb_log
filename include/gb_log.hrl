@@ -32,7 +32,7 @@
 		      mod=?MODULE,
 		      line=?LINE,
 		      fmt=FMT,
-		      args=Args}), ok).
+		      args=Args})).
 
 -define(debug(FMT, Args), ?log_boiler_plate(?debug_level, FMT, Args)).
 -define(debug(FMT), ?debug(FMT, [])).
