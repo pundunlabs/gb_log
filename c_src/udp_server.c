@@ -40,7 +40,7 @@ int main(int argc, char **argv)
     int	 from_len;
     char *dirname;
     char *filename;
-    char mesg[3000];
+    char mesg[1024*1024];
     int buffsize = 1024 * 1024;
     int port;
 
@@ -75,9 +75,10 @@ int main(int argc, char **argv)
 
     for (;;)
     {
-	if ((n = recvfrom(sockfd,mesg,2999,0,(struct sockaddr *)&cliaddr,&len)) == 0) {
+	if ((n = recvfrom(sockfd,mesg,sizeof(mesg)-1,0,(struct sockaddr *)&cliaddr,&len)) == 0) {
 	    continue;
 	}
+	mesg[n] = '\n';
 	mesg[n+1] = '\0';
 	from_len = sprintf(from,"== %s:%d ==\n", inet_ntoa(cliaddr.sin_addr), cliaddr.sin_port);
 	write_log_ext(from, from_len);
