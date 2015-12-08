@@ -138,6 +138,7 @@ init() ->
     NFiles  = ?gb_conf_get(number_of_files, 30),
     RHost   = ?gb_conf_get(remote_host, "127.0.0.1"),
     RPort   = ?gb_conf_get(remote_port, 32000),
+    Type   = cast_to_atom(?gb_conf_get(type, ascii)),
 
     gb_log_oam:load_default_filter(),
 
@@ -152,7 +153,7 @@ init() ->
 
     true = register(?MODULE, self()),
     proc_lib:init_ack({ok, self()}),
-    State = #state{type=ascii, filefd=FileFD, fname=Fname,
+    State = #state{type=Type, filefd=FileFD, fname=Fname,
 		   fsize = FSize, nfiles = NFiles,
 		   udpfd=Sock, remhost=RHost, remport=RPort,
 		   node=atom_to_list(node())},
@@ -203,3 +204,8 @@ internal_fmt(Fmt, Args) ->
 	      fmt=Fmt,
 	      args=Args},
     _LogData = fmt_log(Log).
+
+cast_to_atom(List) when is_list(List) ->
+    list_to_atom(List);
+cast_to_atom(Atom) when is_atom(Atom) ->
+    Atom.

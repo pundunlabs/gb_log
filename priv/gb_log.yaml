@@ -2,9 +2,9 @@
 ---
 app_name : gb_log
 params   :
-    logdir          : "/Users/jonas/tmp/log"
     logname         : "local.pundun.log"
     maxsize         : 60
     number_of_files : 20
-    remote_host     : "127.0.0.1"
-    remote_port     : 32000 
+    remote_host     : "cobra"
+    remote_port     : 32000
+    type	    : both
