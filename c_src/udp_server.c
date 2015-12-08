@@ -1,5 +1,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <libgen.h>
@@ -35,11 +36,15 @@ int main(int argc, char **argv)
     int sockfd,n;
     struct sockaddr_in servaddr,cliaddr;
     socklen_t len;
+    char from[512];
+    int	 from_len;
     char *dirname;
     char *filename;
     char mesg[3000];
     int buffsize = 1024 * 1024;
     int port;
+
+    len = sizeof(cliaddr);
 
     dirname = getarg('d', argc, argv);
     filename = getarg('l', argc, argv);
@@ -50,6 +55,8 @@ int main(int argc, char **argv)
 	port = 32000;
 
     printf("port %d dir %s logname %s\n", port, dirname, filename);
+
+    daemonize();
 
     /* find and open the right log */
     start_log(dirname, filename);
@@ -66,12 +73,14 @@ int main(int argc, char **argv)
 	printf("Could not set big receive buffer\n");
     }
 
-    daemonize();
-
     for (;;)
     {
-	len = sizeof(cliaddr);
-	n = recvfrom(sockfd,mesg,3000,0,(struct sockaddr *)&cliaddr,&len);
+	if ((n = recvfrom(sockfd,mesg,2999,0,(struct sockaddr *)&cliaddr,&len)) == 0) {
+	    continue;
+	}
+	mesg[n+1] = '\0';
+	from_len = sprintf(from,"== %s:%d ==\n", inet_ntoa(cliaddr.sin_addr), cliaddr.sin_port);
+	write_log_ext(from, from_len);
 	write_log_ext(mesg, n);
     }
 }
