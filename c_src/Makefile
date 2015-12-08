@@ -25,6 +25,8 @@ show:
 	@echo $(PRIV_OBJS)
 	@echo $(UDP_LOG_SERVER_OBJECTS)
 
+clean:
+	rm $(PRIV_BIN)/log_server $(UDP_LOG_SERVER_OBJECTS)
 
 $(PRIV_OBJS):
 	mkdir -p $@
@@ -33,7 +35,7 @@ $(PRIV_BIN):
 	mkdir -p $@
 
 $(PRIV_OBJS)/%.o: %.c
-	$(CC) -c -Wall $< -o $@
+	$(CC) -c -O2 -g -Wall $< -o $@
 
 $(PRIV_BIN)/log_server: $(UDP_LOG_SERVER_OBJECTS)
 	$(CC) -o $@ $^
