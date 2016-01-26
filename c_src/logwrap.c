@@ -21,6 +21,9 @@ char _log_wrap_log_file[FILENAME_MAX];
 int log_fd;
 int log_num;
 
+static unsigned int log_generations = LOG_GENERATIONS;
+static unsigned int log_maxsize = LOG_MAXSIZE;
+
 /* prototypes */
 void write_log(int *logfdp, int *log_nump, char *buf, int len);
 void log_print(char *format, ...);
@@ -48,7 +51,7 @@ void write_log(int *logfdp, int *log_nump, char *buf, int len) {
     int size;
     
     size = lseek(*logfdp, 0, SEEK_END);
-    if (size + len  > LOG_MAXSIZE) {
+    if (size + len  > log_maxsize) {
 	close(*logfdp);
 	move_logs();
 	*logfdp = open_log(O_RDWR|O_CREAT|O_TRUNC);
@@ -99,10 +102,10 @@ void move_logs() {
     /* delete / remove the oldest generation */
     snprintf(tof, sizeof(tof), "%s/%s.%d", _log_wrap_log_dir,
    				           _log_wrap_log_file,
-    					    LOG_GENERATIONS);
+					    log_generations);
     unlink(tof);
 
-    for (i=LOG_GENERATIONS; i>1; i--) {
+    for (i=log_generations; i>1; i--) {
 	snprintf(frf, sizeof(frf), "%s/%s.%d", _log_wrap_log_dir,
 					       _log_wrap_log_file,
 					       i-1);
@@ -151,3 +154,10 @@ void start_log(char *log_dir, char *log_file) {
     log_fd = open_log(O_RDWR|O_APPEND|O_CREAT);
 }
 
+void set_log_generations(unsigned int set_log_generations) {
+    log_generations = set_log_generations;
+}
+
+void set_max_logsize(unsigned int set_log_maxsize) {
+    log_maxsize = set_log_maxsize * 1024 * 1024;
+}

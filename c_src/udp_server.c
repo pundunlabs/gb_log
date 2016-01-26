@@ -9,26 +9,48 @@
 #include "daemonize.h"
 
 void usage(char **argv) {
-    printf("Usage: %s -d <logdir> -l <logname>\n", basename(argv[0]));
+    printf("Usage: %s -d <logdir> -l <logname>\n",	     basename(argv[0]));
     printf("       %s -p <port> -d <logdir> -l <logname>\n", basename(argv[0]));
+    printf("       %s -s <log size> (size in megabytes of log file before wrapping)\n", basename(argv[0]));
+    printf("       %s -g <log generations> (number generations of log file before wrapping)\n", basename(argv[0]));
 }
 
 char* getarg(char param, int argc, char **argv) {
     int i;
     for (i=1; i<argc; i++) {
 	if (argv[i][0] == '-' && argv[i][1] == param) {
-	    if(argv[i+1])
+	    if (argv[i+1])
 		return argv[i+1];
 	}
     }
-    usage(argv);
-    exit(EXIT_FAILURE);
+    return NULL;
 }
 
 int getport(int argc, char **argv) {
     char *portarg;
-    portarg = getarg('p', argc, argv);
-    return atoi(portarg);
+    if((portarg = getarg('p', argc, argv))) {
+	return atoi(portarg);
+    }
+    /* if not in args return default port */
+    return 32000;
+}
+
+static void logsize(int argc, char **argv) {
+    char *logsizep;
+    unsigned int logsize;
+    if ((logsizep = getarg('s', argc, argv))) {
+	logsize = atoi(logsizep);
+	set_max_logsize(logsize);
+    }
+}
+
+static void loggenerations(int argc, char **argv) {
+    char *loggenp;
+    unsigned int loggens;
+    if ((loggenp = getarg('g', argc, argv))) {
+	loggens = atoi(loggenp);
+	set_log_generations(loggens);
+    }
 }
 
 int main(int argc, char **argv)
@@ -44,15 +66,20 @@ int main(int argc, char **argv)
     int buffsize = 1024 * 1024;
     int port;
 
+    if (argc < 4) {
+	usage(argv);
+	exit(EXIT_SUCCESS);
+    }
+
     len = sizeof(cliaddr);
 
     dirname = getarg('d', argc, argv);
     filename = getarg('l', argc, argv);
 
-    if (argc > 5 )
-	port = getport(argc, argv);
-    else
-	port = 32000;
+    port = getport(argc, argv);
+
+    logsize(argc, argv);
+    loggenerations(argc, argv);
 
     printf("port %d dir %s logname %s\n", port, dirname, filename);
 
