@@ -17,6 +17,7 @@ MODULES = \
 	gb_log_cfg \
 	gb_log_oam \
 	gb_log_el \
+	gb_trace \
 
 ERL_FILES = $(MODULES:%=%.erl)
 ERL_BEAMS = $(MODULES:%=$(EBIN)/%.beam)
@@ -27,6 +28,7 @@ INCLUDE_DIRS = \
 	../include \
 	../../gb_conf/include
 
+ERL_FLAGS = -Wall
 ERL_INCLUDE = $(INCLUDE_DIRS:%=-I %)
 .PHONY: all clean beams
 
@@ -38,7 +40,7 @@ gb_log_cfg.erl: gb_log_cfg.yrl
 	erlc $<
 
 $(EBIN)/%.beam: %.erl $(HRL_FILES)
-	erlc $(ERL_INCLUDE) -o $(EBIN) $<
+	erlc $(ERL_FLAGS) $(ERL_INCLUDE) -o $(EBIN) $<
 
 $(EBIN):
 	mkdir $@
