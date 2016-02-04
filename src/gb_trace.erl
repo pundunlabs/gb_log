@@ -20,7 +20,8 @@
 -module(gb_trace).
 -export([pid/2, pid/3,
 	 calls/1, calls/2,
-	 pattern/3, rem_pattern/3,
+	 pattern/1, pattern/3,
+	 rem_pattern/1, rem_pattern/3,
 	 stop/0]).
 
 %% Internal API exports
@@ -36,10 +37,14 @@
 -record(mfa, {mod, func}).
 
 %% API
+pattern(String) when is_list(String) ->
+    pattern(String, [], [local]).
 pattern(String, MS, Flags) when is_list(String) ->
     MFAs = scan(String),
     send_req(pattern, {MFAs, MS, Flags, true}).
 
+rem_pattern(String) ->
+    rem_pattern(String, [], [local]).
 rem_pattern(String, MS, Flags) when is_list(String) ->
     MFAs = scan(String),
     send_req(pattern, {MFAs, MS, Flags, false}).
