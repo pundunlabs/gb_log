@@ -15,7 +15,7 @@
 %% limitations under the License.
 %%%===================================================================
 
--record(lf, {level, ts, mod, line, fmt, args}).
+-record(lf, {level, ts, mod, line, pid, func, fmt, args}).
 
 -define(debug_level,	0).
 -define(info_level,	1).
@@ -31,6 +31,7 @@
 		  #lf{level=Level,
 		      mod=?MODULE,
 		      line=?LINE,
+		      pid=self(),
 		      fmt=FMT,
 		      args=Args})).
 

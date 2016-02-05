@@ -69,8 +69,9 @@ fmt_log(LF = #lf{ts=undefined}) ->
 	  format_time(Time), ".", 
 	  io_lib:format("~3.3.0w", [MicroSecs div 1000])],
     Level = fmt_level(LF#lf.level),
-    _LogData = io_lib:format("~s ~s [~p:~p] ~s\n", [Ts, Level,
-						    LF#lf.mod, LF#lf.line, String]).
+    _LogData = io_lib:format("~s ~s [~p:~p] ~p ~s\n", [Ts, Level, LF#lf.mod,
+						       LF#lf.line, LF#lf.pid,
+						       String]).
 
 ff(FmtStr) ->
     re:replace(FmtStr, "~p", "~100000p", [{return,list}, global]).
