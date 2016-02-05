@@ -114,15 +114,15 @@ trace_loop(S = #state{msgs = M, time = Time, tmfas = TMFAs0}) when M > 0  ->
 	    stop(S, explicit_stop);
 	{trace, Pid, Type, Trace} ->
 	    Ts2 = ?osts,
-	    ?OUT("trace ~10000p ~10000p ~10000p ~10000p", [calendar:now_to_datetime(Ts2), Pid, Type, Trace]),
+	    ?OUT("~s ~10000p ~10000p ~10000p", [format_ts(Ts2), Pid, Type, Trace]),
 	    trace_loop(S#state{msgs = rem_msg(M), time = rem_time(Time, Ts2, Ts) });
 	{trace_ts, Pid, Type, Trace, TraceTs} ->
 	    Ts2 = ?osts,
-	    ?OUT("trace ~10000p ~10000p ~10000p ~10000p", [calendar:now_to_datetime(TraceTs), Pid, Type, Trace]),
+	    ?OUT("~s ~10000p ~10000p ~10000p", [format_ts(TraceTs), Pid, Type, Trace]),
 	    trace_loop(S#state{msgs = rem_msg(M) , time = rem_time(Time, Ts2, Ts) });
 	Trace ->
 	    Ts2 = ?osts,
-	    ?OUT("trace ~10000p ~10000p", [calendar:now_to_datetime(Ts2), Trace]),
+	    ?OUT("~s ~10000p", [format_ts(Ts2), Trace]),
 	    trace_loop(S#state{msgs = rem_msg(M), time = rem_time(Time, Ts2, Ts) })
     after Time ->
 	    stop(S, {stop, time})
@@ -183,3 +183,16 @@ iterate(func, [{_, 1, Func}| R], MFA, Aux) ->
 
 iterate(_, [],_,Aux) ->
     Aux.
+
+format_ts(TS) ->
+    {Date, Time} = calendar:now_to_local_time(TS),
+    lists:flatten([format_date(Date), " ",format_time(Time)]).
+
+format_time({H,M,S}) ->
+    lists:flatten(io_lib:format("~2.2.0w:~2.2.0w:~2.2.0w", [H,M,S]));
+format_time(_) ->
+    {error, invalid_time_format}.
+format_date({Y,M,D}) ->
+    lists:flatten(io_lib:format("~4.4.0w-~2.2.0w-~2.2.0w", [Y,M,D]));
+format_date(Inv) ->
+    {error, {invalid_format, Inv}}.
