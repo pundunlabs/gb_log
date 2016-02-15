@@ -57,7 +57,7 @@ calls(String) ->
 
 calls(String, Opts) ->
     MFAs = scan(String),
-    spawn_link(?MODULE, trace_, [all, [call], MFAs, Opts]).
+    my_spawn_link(?MODULE, trace_, [all, [call], MFAs, Opts]).
 
 pid(Pid, Flags) when is_pid(Pid), is_list(Flags) ->
     pid(Pid, Flags, ?def_opts).
@@ -65,19 +65,31 @@ pid(Pid, Flags) when is_pid(Pid), is_list(Flags) ->
 pid(Pid, Flags, Opts) when is_pid(Pid),
 			     is_list(Flags),
 			     is_list(Opts) ->
-    spawn_link(?MODULE, trace_, [Pid, Flags, [], Opts]).
+    my_spawn_link(?MODULE, trace_, [Pid, Flags, [], Opts]).
+
+my_spawn_link(Mod, Func, Args) ->
+    case whereis(?MODULE) of
+	undefined ->
+	    spawn_link(Mod, Func, Args);
+	_ ->
+	    {error, already_running}
+    end.
 
 %% Internal functions
 send_req(Req, ReqArg) ->
     send_req(Req, ReqArg, 5000).
 send_req(Req, ReqArgs, To) ->
     Ref = erlang:make_ref(),
-    erlang:send(?MODULE, {Req, {Ref, self()}, ReqArgs}),
-    receive 
-	{Ref, Res} ->
-	    Res
-    after To ->
-	{error, timeout}
+    try
+	erlang:send(?MODULE, {Req, {Ref, self()}, ReqArgs}),
+	receive
+	    {Ref, Res} ->
+		Res
+	after To ->
+	    {error, timeout}
+	end
+    catch _:badarg ->
+	{error, not_running}
     end.
 
 reply_to({Ref, From}, R) ->
