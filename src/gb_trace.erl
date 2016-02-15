@@ -109,7 +109,7 @@ trace_(Pid, Flags, MFAs, Opts) ->
     TMFAs = generating_mfas(MFAs),
     [erlang:trace_pattern(TMFA, true, [local]) || TMFA <- TMFAs],
     Time = proplists:get_value(time, Opts, 10000),
-    Msgs = proplists:get_value(msgs, Opts, 1000),
+    Msgs = proplists:get_value(msgs, Opts, 100),
     trace_loop(#state{pid = Pid, flags = Flags, time = Time, msgs = Msgs, tmfas=TMFAs}).
 
 trace_loop(S = #state{msgs = M, time = Time, tmfas = TMFAs0}) when M > 0  ->
