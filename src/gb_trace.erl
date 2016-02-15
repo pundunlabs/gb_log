@@ -30,7 +30,7 @@
 -include("gb_log.hrl").
 -define(OUT(Fmt, Args), ?debug(Fmt, Args)).
 
--define(def_opts, [{msgs, 100}, {time, 10000}]).
+-define(def_opts, [{msgs, 100}, {time, 10}]).
 -define(osts, os:timestamp()).
 
 -record(state, {pid, flags, time, msgs, tmfas}).
@@ -108,9 +108,9 @@ trace_(Pid, Flags, MFAs, Opts) ->
     erlang:trace(Pid, true, Flags),
     TMFAs = generating_mfas(MFAs),
     [erlang:trace_pattern(TMFA, true, [local]) || TMFA <- TMFAs],
-    Time = proplists:get_value(time, Opts, 10000),
+    Time = proplists:get_value(time, Opts, 10),
     Msgs = proplists:get_value(msgs, Opts, 100),
-    trace_loop(#state{pid = Pid, flags = Flags, time = Time, msgs = Msgs, tmfas=TMFAs}).
+    trace_loop(#state{pid = Pid, flags = Flags, time = Time * 1000, msgs = Msgs, tmfas=TMFAs}).
 
 trace_loop(S = #state{msgs = M, time = Time, tmfas = TMFAs0}) when M > 0  ->
     Ts = ?osts,
