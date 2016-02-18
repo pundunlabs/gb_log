@@ -41,7 +41,7 @@ pattern(String) when is_list(String) ->
     pattern(String, [], [local]).
 pattern(String, MS, Flags) when is_list(String) ->
     MFAs = scan(String),
-    send_req(pattern, {MFAs, MS, Flags, true}).
+    send_req(pattern, {MFAs, MS, Flags, [{'_', [], [{return_trace}]}]}).
 
 rem_pattern(String) ->
     rem_pattern(String, [], [local]).
@@ -107,10 +107,10 @@ trace_(Pid, Flags, MFAs, Opts) ->
     true = erlang:register(?MODULE, self()),
     erlang:trace(Pid, true, Flags),
     TMFAs = generating_mfas(MFAs),
-    [erlang:trace_pattern(TMFA, true, [local]) || TMFA <- TMFAs],
+    [erlang:trace_pattern(TMFA, [{'_', [], [{return_trace}]}], [local]) || TMFA <- TMFAs],
     Time = proplists:get_value(time, Opts, 10),
     Msgs = proplists:get_value(msgs, Opts, 100),
-    trace_loop(#state{pid = Pid, flags = Flags, time = Time * 1000, msgs = Msgs, tmfas=TMFAs}).
+    trace_loop(#state{pid = Pid, flags = Flags, time = make_time(Time), msgs = Msgs, tmfas=TMFAs}).
 
 trace_loop(S = #state{msgs = M, time = Time, tmfas = TMFAs0}) when M > 0  ->
     Ts = ?osts,
@@ -131,6 +131,10 @@ trace_loop(S = #state{msgs = M, time = Time, tmfas = TMFAs0}) when M > 0  ->
 	{trace_ts, Pid, Type, Trace, TraceTs} ->
 	    Ts2 = ?osts,
 	    ?OUT("~s ~10000p ~10000p ~10000p", [format_ts(TraceTs), Pid, Type, Trace]),
+	    trace_loop(S#state{msgs = rem_msg(M) , time = rem_time(Time, Ts2, Ts) });
+	{trace,Pid, return_from, Fun, Res} ->
+	    Ts2 = ?osts,
+	    ?OUT("~s ~p ~p ~p -> ~10000p", [format_ts(Ts2), Pid, return_from, Fun, Res]),
 	    trace_loop(S#state{msgs = rem_msg(M) , time = rem_time(Time, Ts2, Ts) });
 	Trace ->
 	    Ts2 = ?osts,
@@ -208,3 +212,8 @@ format_date({Y,M,D}) ->
     lists:flatten(io_lib:format("~4.4.0w-~2.2.0w-~2.2.0w", [Y,M,D]));
 format_date(Inv) ->
     {error, {invalid_format, Inv}}.
+
+make_time(infinity) ->
+    infinity;
+make_time(Sec) when is_integer(Sec) ->
+    Sec * 1000.
