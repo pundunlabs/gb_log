@@ -47,11 +47,13 @@ static int write_to_log(int logfd, char *buf, int len) {
     }
 }
 
+#define WRAPMSG "wrapping\n"
 void write_log(int *logfdp, int *log_nump, char *buf, int len) {
     int size;
     
     size = lseek(*logfdp, 0, SEEK_END);
     if (size + len  > log_maxsize) {
+	write_to_log(*logfdp, WRAPMSG, sizeof(WRAPMSG) - 1);
 	close(*logfdp);
 	move_logs();
 	*logfdp = open_log(O_RDWR|O_CREAT|O_TRUNC);
