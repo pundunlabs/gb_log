@@ -107,7 +107,7 @@ int main(int argc, char **argv)
 	}
 	mesg[n] = '\n';
 	mesg[n+1] = '\0';
-	from_len = sprintf(from,"== %s:%d ==\n", inet_ntoa(cliaddr.sin_addr), cliaddr.sin_port);
+	from_len = sprintf(from,"== %s:%d ==\n", inet_ntoa(cliaddr.sin_addr), ntohs(cliaddr.sin_port));
 	write_log_ext(from, from_len);
 	write_log_ext(mesg, n);
     }
