@@ -20,6 +20,7 @@ char _log_wrap_log_dir[FILENAME_MAX];
 char _log_wrap_log_file[FILENAME_MAX];
 int log_fd;
 int log_num;
+char write_meta_info_msg = 0;
 
 static unsigned int log_generations = LOG_GENERATIONS;
 static unsigned int log_maxsize = LOG_MAXSIZE;
@@ -48,15 +49,24 @@ static int write_to_log(int logfd, char *buf, int len) {
 }
 
 #define WRAPMSG "wrapping\n"
+void wrap_log_int(int *logfdp) {
+    if (write_meta_info_msg)
+	write_to_log(*logfdp, WRAPMSG, sizeof(WRAPMSG) - 1);
+    close(*logfdp);
+    move_logs();
+    *logfdp = open_log(O_RDWR|O_CREAT|O_TRUNC);
+}
+
+void wrap_log() {
+    wrap_log_int(&log_fd);
+}
+
 void write_log(int *logfdp, int *log_nump, char *buf, int len) {
     int size;
     
     size = lseek(*logfdp, 0, SEEK_END);
     if (size + len  > log_maxsize) {
-	write_to_log(*logfdp, WRAPMSG, sizeof(WRAPMSG) - 1);
-	close(*logfdp);
-	move_logs();
-	*logfdp = open_log(O_RDWR|O_CREAT|O_TRUNC);
+	wrap_log_int(logfdp);
     }
     write_to_log(*logfdp, buf, len);
 }
@@ -140,12 +150,14 @@ int open_log(int flags) {
 	return -1;
     }
 
-    now = time(NULL);
-    tmptr = localtime(&now);
-    res = strftime(buf, LOGBUF_SIZE, "%F %T LOGGING STARTED\n", tmptr);
-    
-    write_log(&lfd, &log_num, buf, res);
-    
+    if (write_meta_info_msg) {
+	now = time(NULL);
+	tmptr = localtime(&now);
+	res = strftime(buf, LOGBUF_SIZE, "%F %T LOGGING STARTED\n", tmptr);
+
+	write_log(&lfd, &log_num, buf, res);
+    }
+
     return lfd;
 }
 
@@ -162,4 +174,8 @@ void set_log_generations(unsigned int set_log_generations) {
 
 void set_max_logsize(unsigned int set_log_maxsize) {
     log_maxsize = set_log_maxsize * 1024 * 1024;
+}
+
+void set_write_meta_info_msg(char flag) {
+    write_meta_info_msg = flag;
 }
