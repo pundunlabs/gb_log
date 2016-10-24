@@ -1,6 +1,6 @@
 {application, gb_log,
  [{description, "Growbeard Logging"},
-  {vsn, "0.1"},
+  {vsn, "1.0"},
   {modules, []},
   {registered, []},
   {applications, [gb_conf]},

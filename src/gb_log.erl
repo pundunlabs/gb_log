@@ -24,7 +24,7 @@
 		fname, fsize, nfiles}).
 -include("gb_log.hrl").
 -include_lib("kernel/include/file.hrl").
--include("gb_conf.hrl").
+-include_lib("gb_conf/include/gb_conf.hrl").
 
 tester(S) ->
     ?debug("tjenare: ~s", [S]).
