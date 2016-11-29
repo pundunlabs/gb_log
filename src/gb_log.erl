@@ -141,6 +141,7 @@ init() ->
     RPort   = ?gb_conf_get(remote_port, 32000),
     Type   = cast_to_atom(?gb_conf_get(type, ascii)),
 
+    gb_log_oam:load_store_filters_beam(),
     gb_log_oam:load_default_filter(),
 
     %% receive shutdown messages
