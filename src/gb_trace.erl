@@ -20,7 +20,7 @@
 -module(gb_trace).
 -export([pid/2, pid/3,
 	 calls/1, calls/2,
-	 pattern/1, pattern/3,
+	 add_pattern/1, add_pattern/3,
 	 rem_pattern/1, rem_pattern/3,
 	 stop/0]).
 
@@ -37,9 +37,9 @@
 -record(mfa, {mod, func}).
 
 %% API
-pattern(String) when is_list(String) ->
-    pattern(String, [], [local]).
-pattern(String, MS, Flags) when is_list(String) ->
+add_pattern(String) when is_list(String) ->
+    add_pattern(String, [], [local]).
+add_pattern(String, MS, Flags) when is_list(String) ->
     MFAs = scan(String),
     send_req(pattern, {MFAs, MS, Flags, [{'_', [], [{return_trace}]}]}).
 
@@ -57,14 +57,14 @@ calls(String) ->
 
 calls(String, Opts) ->
     MFAs = scan(String),
-    my_spawn_link(?MODULE, trace_, [all, [call], MFAs, Opts]).
+    my_spawn_link(?MODULE, trace_, [all, [call,return_to], MFAs, Opts]).
 
 pid(Pid, Flags) when is_pid(Pid), is_list(Flags) ->
     pid(Pid, Flags, ?def_opts).
 
 pid(Pid, Flags, Opts) when is_pid(Pid),
-			     is_list(Flags),
-			     is_list(Opts) ->
+			   is_list(Flags),
+			   is_list(Opts) ->
     my_spawn_link(?MODULE, trace_, [Pid, Flags, [], Opts]).
 
 my_spawn_link(Mod, Func, Args) ->
@@ -124,6 +124,14 @@ trace_loop(S = #state{msgs = M, time = Time, tmfas = TMFAs0}) when M > 0  ->
 	{stop, From, []} ->
 	    reply_to(From, ok),
 	    stop(S, explicit_stop);
+	{trace, Pid, call, {CM,CF,CA}} ->
+	    Ts2 = ?osts,
+	    ?OUT("~s ~p ~p:~p(~s) arity: ~p", [format_ts(Ts2), Pid, CM, CF, fmt_cargs(CA), length(CA)]),
+	    trace_loop(S#state{msgs = rem_msg(M), time = rem_time(Time, Ts2, Ts) });
+	{trace, Pid, return_to, {CM,CF,CA}} ->
+	    Ts2 = ?osts,
+	    ?OUT("~s ~p ~p ~p:~p/~p", [format_ts(Ts2), Pid, return_to, CM, CF, CA]),
+	    trace_loop(S#state{msgs = rem_msg(M), time = rem_time(Time, Ts2, Ts) });
 	{trace, Pid, Type, Trace} ->
 	    Ts2 = ?osts,
 	    ?OUT("~s ~10000p ~10000p ~10000p", [format_ts(Ts2), Pid, Type, Trace]),
@@ -132,9 +140,9 @@ trace_loop(S = #state{msgs = M, time = Time, tmfas = TMFAs0}) when M > 0  ->
 	    Ts2 = ?osts,
 	    ?OUT("~s ~10000p ~10000p ~10000p", [format_ts(TraceTs), Pid, Type, Trace]),
 	    trace_loop(S#state{msgs = rem_msg(M) , time = rem_time(Time, Ts2, Ts) });
-	{trace,Pid, return_from, Fun, Res} ->
+	{trace,Pid, return_from, {CM,CF,CA}, Res} ->
 	    Ts2 = ?osts,
-	    ?OUT("~s ~p ~p ~p -> ~10000p", [format_ts(Ts2), Pid, return_from, Fun, Res]),
+	    ?OUT("~s ~p ~p:~p/~p -> ~10000p", [format_ts(Ts2), Pid, CM, CF, CA, Res]),
 	    trace_loop(S#state{msgs = rem_msg(M) , time = rem_time(Time, Ts2, Ts) });
 	Trace ->
 	    Ts2 = ?osts,
@@ -212,6 +220,12 @@ format_date({Y,M,D}) ->
     lists:flatten(io_lib:format("~4.4.0w-~2.2.0w-~2.2.0w", [Y,M,D]));
 format_date(Inv) ->
     {error, {invalid_format, Inv}}.
+
+
+fmt_cargs([A]) ->
+    io_lib:format("~10000p", [A]);
+fmt_cargs([A|R]) ->
+    io_lib:format("~10000p,", [A]) ++ fmt_cargs(R).
 
 make_time(infinity) ->
     infinity;
