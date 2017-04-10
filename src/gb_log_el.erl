@@ -59,20 +59,24 @@ handle_event({Type, _G, {_E, progress, Report}}, State) ->
     end,
     {ok, State};
 
-handle_event({info_report, _G, {_, Type, Report}}, State) ->
+handle_event({info_report, _G, {_Pid, Type, Report}}, State) ->
     log_info_report(Type, Report),
     {ok, State};
 
-handle_event({error_report, _G, {_E, Type, Report}}, State) ->
+handle_event({error_report, _G, {_Pid, Type, Report}}, State) ->
     log_error_report(Type, Report),
     {ok, State};
 
-handle_event({error, _G, {_E, Type, Report}}, State) ->
-    log_error(Type, Report),
+handle_event({warning_msg, _G, {_Pid, Fmt, Data}}, State) ->
+    log_warning(Fmt, Data),
     {ok, State};
 
-handle_event({info_msg, _G, {_E, Type, Report}}, State) ->
-    log_info(Type, Report),
+handle_event({error, _G, {_Pid, Fmt, Data}}, State) ->
+    log_error(Fmt, Data),
+    {ok, State};
+
+handle_event({info_msg, _G, {_Pid, Fmt, Data}}, State) ->
+    log_info(Fmt, Data),
     {ok, State};
 
 handle_event({Event, _G, {_E, Type, Report}}, State) ->
@@ -131,7 +135,7 @@ log_error_report(Type, Report) ->
 
 %% log_info
 log_info(R0, []) ->
-    R = re:replace(R0, "\n", "", [{return, list}, global]),
+    R = re:replace(R0, "~n", "", [{return, list}, global]),
     ?debug("info: ~s", [R]),
     ok;
 log_info(Fmt, Args) when is_list(Fmt), is_list(Args) ->
@@ -142,12 +146,15 @@ log_info(Type, Report) ->
     ok.
 
 %% log_error
-log_error(_, [R0]) ->
-    R = re:replace(R0, "\n", " ", [{return, list}, global]),
-    ?error("~s", [R]),
-    ok;
-log_error(T, R) ->
-    ?error("~p ~p", [T, R]),
+log_error(F0, Data) ->
+    F = re:replace(F0, "~n", " ", [{return, list}, global]),
+    ?error(F, Data),
+    ok.
+
+%% log_warning
+log_warning(F0, Data) ->
+    F = re:replace(F0, "~n", " ", [{return, list}, global]),
+    ?warning(F, Data),
     ok.
 
 %% log_unknown_report
