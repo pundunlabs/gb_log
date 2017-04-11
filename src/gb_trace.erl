@@ -28,7 +28,7 @@
 -export([trace_/4]).
 
 -include("gb_log.hrl").
--define(OUT(Fmt, Args), ?debug(Fmt, Args)).
+-define(OUT(Fmt, Args), ?warning(Fmt, Args)).
 
 -define(def_opts, [{msgs, 100}, {time, 10}]).
 -define(osts, os:timestamp()).
@@ -41,7 +41,7 @@ add_pattern(String) when is_list(String) ->
     add_pattern(String, [], [local]).
 add_pattern(String, MS, Flags) when is_list(String) ->
     MFAs = scan(String),
-    send_req(pattern, {MFAs, MS, Flags, [{'_', [], [{return_trace}]}]}).
+    send_req(pattern, {MFAs, MS, Flags, [{'_', [], [{exception_trace}]}]}).
 
 rem_pattern(String) ->
     rem_pattern(String, [], [local]).
@@ -107,7 +107,7 @@ trace_(Pid, Flags, MFAs, Opts) ->
     true = erlang:register(?MODULE, self()),
     erlang:trace(Pid, true, Flags),
     TMFAs = generating_mfas(MFAs),
-    [erlang:trace_pattern(TMFA, [{'_', [], [{return_trace}]}], [local]) || TMFA <- TMFAs],
+    [erlang:trace_pattern(TMFA, [{'_', [], [{exception_trace}]}], [local]) || TMFA <- TMFAs],
     Time = proplists:get_value(time, Opts, 10),
     Msgs = proplists:get_value(msgs, Opts, 100),
     trace_loop(#state{pid = Pid, flags = Flags, time = make_time(Time), msgs = Msgs, tmfas=TMFAs}).
