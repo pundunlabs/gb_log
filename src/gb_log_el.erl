@@ -109,8 +109,12 @@ log_info_report(info_report, [{supervisor, {local, Sup}}, {started, Args}]) ->
     Name = proplists:get_value(name, Args),
     ?debug("supervisor ~p started ~p(~p)", [Sup, Name, Pid]),
     ok;
-log_info_report(info_report, Report) ->
-    ?debug("info: ~p", [Report]),
+log_info_report(info_report, R0) ->
+    R1 = re:replace(R0, "\n", "", [{return, list}, global]),
+    R2 = re:replace(R1, "\r", "", [{return, list}, global]),
+    R = re:replace(R2, "\t", " ", [{return, list}, global]),
+
+    ?debug("info: ~p", [R]),
     ok;
 log_info_report(std_info, [{application, App}|Rest]) ->
     ?debug("application ~p ~p", [App, Rest]),
