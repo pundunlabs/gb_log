@@ -193,7 +193,7 @@ log_data([], S) ->
 log_data(Data, S = #state{type=ascii}) ->
     _NewS = ascii_log(S, Data);
 log_data(Data, S = #state{type=both}) ->
-    gen_udp:send(S#state.udpfd, S#state.remhost, S#state.remport, Data),
+    gen_udp:send(S#state.udpfd, S#state.remhost, S#state.remport, [S#state.node," ==\n",Data]),
     _NewS = ascii_log(S, Data).
 
 terminate(State) ->

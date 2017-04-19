@@ -145,7 +145,7 @@ int main(int argc, char **argv)
 	mesg[sizeof(mesg)-1] = '\n';
 
 	if (write_remote_info) {
-	    from_len = sprintf(from,"== %s:%d ==\n", inet_ntoa(cliaddr.sin_addr), ntohs(cliaddr.sin_port));
+	    from_len = sprintf(from,"== %s:%d == ", inet_ntoa(cliaddr.sin_addr), ntohs(cliaddr.sin_port));
 	    write_log_ext(from, from_len);
 	}
 	write_log_ext(mesg, n);
