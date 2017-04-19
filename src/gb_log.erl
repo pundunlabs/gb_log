@@ -188,6 +188,8 @@ log_loop(S, {_,Buffer}) ->
     NewS = log_data(lists:reverse(Buffer), S),
     log_loop(NewS, {0, []}).
 	    
+log_data([], _) ->
+    ok;
 log_data(Data, S = #state{type=ascii}) ->
     _NewS = ascii_log(S, Data);
 log_data(Data, S = #state{type=both}) ->
