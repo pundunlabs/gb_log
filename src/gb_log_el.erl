@@ -35,7 +35,13 @@
 
 %% API
 add() ->
-    gen_event:add_handler(error_logger, ?MODULE, []).
+    Handlers = gen_event:which_handlers(error_logger),
+    case lists:member(?MODULE, Handlers) of
+	true ->
+	    ok;
+	_ ->
+	    gen_event:add_handler(error_logger, ?MODULE, [])
+    end.
 
 remove() ->
     (catch gen_event:delete_handler(error_logger, ?MODULE, delete)).
