@@ -89,8 +89,13 @@ do_log(Log) when is_list(Log) ->
 %% TODO: this should be moved out to log filter
 %% for now; log everything independent of log level
 log(LF = #lf{}) ->
-    LogLine = fmt_log(LF),
-    do_log(LogLine).
+    try
+	LogLine = fmt_log(LF),
+	do_log(LogLine)
+    catch _:_ ->
+	ok
+    end.
+
 
 ascii_log(S, Data) ->
     NewS = check_wrap(S),
