@@ -156,6 +156,7 @@ init() ->
 				  binary]),
 
     Fname = filename:join(RootDir, LogName),
+    filelib:ensure_dir(Fname),
     {ok, FileFD} = open_log(Fname),
 
     true = register(?MODULE, self()),
