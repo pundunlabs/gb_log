@@ -210,6 +210,7 @@ terminate(State) ->
 
 internal_fmt(Fmt, Args) ->
     Log = #lf{mod=?MODULE,
+	      pid=self(),
 	      line=?LINE,
 	      fmt=Fmt,
 	      args=Args},
