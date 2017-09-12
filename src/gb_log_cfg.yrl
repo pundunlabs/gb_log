@@ -2,8 +2,6 @@ Nonterminals record namedrecord expr name_value name_values forms form.
 
 Terminals '#' '{' '}' atom '=' '|' ',' dot .
 
-Expect 2.
-
 Rootsymbol forms.
 
 forms -> form : ['$1'].
