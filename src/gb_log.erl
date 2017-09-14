@@ -16,15 +16,19 @@
 %%%===================================================================
 
 -module(gb_log).
--compile(export_all).
-
--export([init/0]).
-	 
 -record(state, {type, filefd, udpfd, remhost, remport, node,
 		fname, fsize, nfiles}).
 -include("gb_log.hrl").
 -include_lib("kernel/include/file.hrl").
 -include_lib("gb_conf/include/gb_conf.hrl").
+
+-export([init/0,
+	 start_link/0]).
+
+-export([log/1,
+	 log_loop/2,
+	 tester/1,
+	 tester/2]).
 
 tester(S) ->
     ?debug("tjenare: ~s", [S]).
@@ -86,8 +90,6 @@ do_log(Log) when is_list(Log) ->
 	    ok
     end.
 
-%% TODO: this should be moved out to log filter
-%% for now; log everything independent of log level
 log(LF = #lf{}) ->
     try
 	LogLine = fmt_log(LF),
