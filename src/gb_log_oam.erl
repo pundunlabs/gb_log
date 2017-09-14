@@ -22,8 +22,14 @@
 
 -module(gb_log_oam).
 -include("gb_log.hrl").
--compile(export_all).
-
+-export([read/0,
+	 read/1,
+	 available_filters/0,
+	 load_filter/1,
+	 load_store_filters_beam/0,
+	 load_default_filter/0,
+	 make_filter/1,
+	 make_filters_mod/1]).
 
 read() ->
     read(filename:join(code:priv_dir(gb_log),"filters.cfg")).
@@ -156,8 +162,8 @@ make_match_field(record, Tuple) when is_tuple(Tuple) ->
 make_match_field(record, [Name | Fields]) ->
     cerl:c_tuple(make_match(Fields, [cerl:c_atom(Name)])).
 
-make_match(List) ->
-    make_match(List, []).
+%make_match(List) ->
+%    make_match(List, []).
 make_match([undefined|R], Aux) ->
     make_match(R, [gen_var()|Aux]);
 make_match([Field|R], Aux) ->
@@ -165,24 +171,24 @@ make_match([Field|R], Aux) ->
 make_match([], Aux) ->
     lists:reverse(Aux).
     
-make_match_field(record, Tuple, Matches) when is_tuple(Tuple) ->
-    make_match_field(record, tuple_to_list(Tuple), Matches);
-make_match_field(record, [Name | Fields], Matches) ->
-    cerl:c_tuple(make_base_match(Fields, [cerl:c_atom(Name)], Matches)).
+%make_match_field(record, Tuple, Matches) when is_tuple(Tuple) ->
+%    make_match_field(record, tuple_to_list(Tuple), Matches);
+%make_match_field(record, [Name | Fields], Matches) ->
+%    cerl:c_tuple(make_base_match(Fields, [cerl:c_atom(Name)], Matches)).
 
-make_base_match([Field|R], Aux, Matches) ->
-    case lists:keyfind(Field, 1, Matches) of
-	{Field, Replace} ->
-	    make_base_match(R, [Replace| Aux], Matches);
-	_ ->
-	    make_base_match(R, [gen_var()|Aux], Matches)
-    end;
-make_base_match([], Aux, _Matches) ->
-    lists:reverse(Aux).
+%make_base_match([Field|R], Aux, Matches) ->
+%    case lists:keyfind(Field, 1, Matches) of
+%	{Field, Replace} ->
+%	    make_base_match(R, [Replace| Aux], Matches);
+%	_ ->
+%	    make_base_match(R, [gen_var()|Aux], Matches)
+%    end;
+%make_base_match([], Aux, _Matches) ->
+%    lists:reverse(Aux).
 
-%% non-tail recursive but still fast 
-setnth(1, [_|Rest], New) -> [New|Rest];
-setnth(I, [E|Rest], New) -> [E|setnth(I-1, Rest, New)].
+%% non-tail recursive but fast 
+%setnth(1, [_|Rest], New) -> [New|Rest];
+%setnth(I, [E|Rest], New) -> [E|setnth(I-1, Rest, New)].
 
 init_gen_var() ->
     put(generated_var,0).
@@ -200,8 +206,8 @@ make_call(Mod0, Fun0, Args) ->
     Fun = cerl:c_atom(Fun0),
     cerl:c_call(Mod, Fun, Args).
     
-make_fun(Args, Body) ->
-    cerl:c_fun(Args, Body).
+%make_fun(Args, Body) ->
+%    cerl:c_fun(Args, Body).
 
 
 mod_info(Name) ->

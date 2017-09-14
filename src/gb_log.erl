@@ -104,10 +104,6 @@ ascii_log(S, Data) ->
     prim_file:write(NewS#state.filefd, Data),
     NewS.
 
-close_log(#state{filefd = FileFD}) ->
-    file:close(FileFD),
-    ok.
-
 open_log(Fname) ->
     {ok, _FD} = prim_file:open(Fname, [append]).
 
