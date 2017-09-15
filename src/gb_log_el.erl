@@ -31,7 +31,7 @@
 	 terminate/2,
 	 code_change/3]).
 
--record(state, {progress=true, log_mode}).
+-record(state, {progress, log_mode}).
 
 %% API
 add() ->
@@ -40,15 +40,15 @@ add() ->
 	true ->
 	    ok;
 	_ ->
-	    gen_event:add_handler(error_logger, ?MODULE, [])
+	    error_logger:add_report_handler(?MODULE, [])
     end.
 
 remove() ->
-    (catch gen_event:delete_handler(error_logger, ?MODULE, delete)).
+    (catch error_logger:delete_report_handler(?MODULE)).
 
 %% gen_event api
 init([]) ->
-    {ok, #state{}}.
+    {ok, #state{progress=true}}.
 
 %%--------------------------------------------------------------------
 %% Func: handle_event/2
@@ -87,6 +87,10 @@ handle_event({info_msg, _G, {_Pid, Fmt, Data}}, State) ->
 
 handle_event({Event, _G, {_E, Type, Report}}, State) ->
     log_unknown_report(Event, Type, Report),
+    {ok, State};
+
+handle_event(E, State) ->
+    ?debug("unhandled event: ~p", [E]),
     {ok, State}.
 
 handle_call(_Call, State) ->
@@ -94,10 +98,11 @@ handle_call(_Call, State) ->
     {ok, {error, not_handled}, State}.
 
 handle_info(_Info, State) ->
-    ?debug("Unknown Info ~p", [_Info]),    
+    ?info("Unknown Info ~p", [_Info]),
     {ok, State}.
 
-terminate(_Reason, _State) ->
+terminate(Reason, _State) ->
+    ?info("terminated: ~p", [Reason]),
     ok.
 
 code_change(_OldVsn, State, _Extra) ->
@@ -111,6 +116,11 @@ log_info_report(info_report, [{application, App}, What]) ->
     ?info("application ~p ~p", [App, What]),
     ok;
 log_info_report(info_report, [{supervisor, {local, Sup}}, {started, Args}]) ->
+    Pid	 = proplists:get_value(pid, Args),
+    Name = proplists:get_value(name, Args),
+    ?debug("supervisor ~p started ~p(~p)", [Sup, Name, Pid]),
+    ok;
+log_info_report(info_report, [{supervisor, {_, Sup}}, {started, Args}]) ->
     Pid	 = proplists:get_value(pid, Args),
     Name = proplists:get_value(name, Args),
     ?debug("supervisor ~p started ~p(~p)", [Sup, Name, Pid]),

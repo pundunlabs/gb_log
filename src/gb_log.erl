@@ -166,6 +166,7 @@ init() ->
 
     %% register our error logger event handler
     gb_log_el:add(),
+
     %% remove default error_logger
     (catch gen_event:delete_handler(error_logger, error_logger, delete)),
 
