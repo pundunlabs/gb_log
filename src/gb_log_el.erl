@@ -146,13 +146,13 @@ log_error_report(Type, Report) ->
 %% log_info
 log_info(R0, []) ->
     R = re:replace(R0, "~n", "", [{return, list}, global]),
-    ?debug("info: ~s", [R]),
+    ?info("info: ~s", [R]),
     ok;
 log_info(Fmt, Args) when is_list(Fmt), is_list(Args) ->
-    ?debug("info: ~s", [io_lib:format(Fmt, Args)]),
+    ?info("info: ~s", [io_lib:format(Fmt, Args)]),
     ok;
 log_info(Type, Report) ->
-    ?debug("info: ~p ~p", [Type, Report]),
+    ?info("info: ~p ~p", [Type, Report]),
     ok.
 
 %% log_error
